@@ -3,6 +3,9 @@ import * as geo from 'd3-geo';
 import * as selection from 'd3-selection';
 import * as zoom from 'd3-zoom';
 import styled from 'styled-components';
+import Popper from '@material-ui/core/Popper';
+import Card from '@material-ui/core/Card';
+import CardContent from '@material-ui/core/CardContent';
 
 const projection = geo.geoMercator();
 const StyledMap = styled.div`
@@ -30,25 +33,37 @@ export const PrecinctMap = () => {
   const mount = useRef();
   const svgRef = useRef();
   const graphRef = useRef();
+  const [popperData, setPopperData] = useState<any>();
 
   useEffect(() => {
     (async () => {
-      const { default: precinctGJ } = await import(
+      // const { default: geojson } = await import(
+      //   // @ts-ignore
+      //   '../../../data/sandiego.txt'
+      // );
+      const { default: geojson } = await import(
         // @ts-ignore
-        '../../../data/sandiego.txt'
+        '../../../data/consolidations.geojson'
       );
       const svg = selection.select(svgRef.current);
       const g = selection.select(graphRef.current);
 
-      projection.fitSize([width, height], precinctGJ);
+      projection.fitSize([width, height], geojson);
 
       g.selectAll('path')
-        .data(precinctGJ.features)
+        .data(geojson.features)
         .enter()
         .append('path')
         .attr('d', geo.geoPath().projection(projection))
-        .on('mouseover', function() {
+        .on('mouseover', function(geo) {
+          setPopperData({
+            anchor: this,
+            geo,
+          });
           selection.select(this as any).raise();
+        })
+        .on('mouseleave', () => {
+          setPopperData(null);
         });
 
       const currZoom = zoom
@@ -81,6 +96,14 @@ export const PrecinctMap = () => {
       >
         <g ref={graphRef} style={{ position: 'relative' }} />
       </svg>
+      <Popper open={!!popperData} anchorEl={popperData?.anchor}>
+        <Card>
+          <CardContent>
+            {popperData?.geo?.properties?.CONSNAME}{' '}
+            {popperData?.geo?.properties?.PRECINCT}
+          </CardContent>
+        </Card>
+      </Popper>
     </StyledMap>
   );
 };
