@@ -8,9 +8,9 @@ module.exports = function(env) {
       host: '0.0.0.0',
       open: true,
     },
-    devtool: devMode ? 'eval' : 'source-map',
+    devtool: devMode ? 'eval-source-map' : 'source-map',
     entry: {
-      client: [path.resolve(__dirname, 'src/client')],
+      client: ['react-hot-loader/patch', path.resolve(__dirname, 'src/client')],
     },
     mode: devMode ? 'development' : 'production',
     module: {
@@ -19,6 +19,14 @@ module.exports = function(env) {
           test: /\.tsx?$/,
           use: 'babel-loader',
           include: path.resolve(__dirname, 'src'),
+        },
+        {
+          test: /\.geojson$/,
+          type: 'json',
+        },
+        {
+          test: /sandiego\.txt$/,
+          type: 'json',
         },
       ],
     },
@@ -47,6 +55,7 @@ module.exports = function(env) {
       }),
     ],
     resolve: {
+      alias: { 'react-dom': '@hot-loader/react-dom' },
       extensions: ['.ts', '.tsx', '.js'],
     },
     stats: 'minimal',
