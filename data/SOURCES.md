@@ -2,6 +2,12 @@
 
 Various data are used in constructing the visualization in this web application.
 
+## california-counties.geojson
+
+A GeoJSON file for all CA counties.
+
+[Source](https://github.com/codeforamerica/click_that_hood/blob/034f4812d1381f5fc7f52eed00745e7d6c59a18c/public/data/california-counties.geojson)
+
 ## sandiego.txt
 
 A GeoJSON file containing precincts.
