@@ -10,8 +10,8 @@ SCRIPT_DIR=$(dirname $0)
 
 node $SCRIPT_DIR/build.js
 
-cat $SCRIPT_DIR/../data/sandiego.txt | \
+sed 's/-VBM//g' $SCRIPT_DIR/../data/sandiego.txt | \
   npx --no-install mapshaper \
   -i /dev/stdin \
-  -dissolve 'CONSNAME' \
+  -dissolve2 'CONSNAME' \
   -o $SCRIPT_DIR/../data/consolidations.geojson
