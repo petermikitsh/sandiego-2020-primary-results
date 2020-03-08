@@ -102,7 +102,7 @@ export const PrecinctMap = ({ contest }: { contest: string }) => {
           })
           // @ts-ignore
           .style('fill', (d: any) => {
-            if (currContestData.isBinaryRace) {
+            if (currContestData?.isBinaryRace) {
               const {
                 properties: { CONSNAME },
               } = d;
