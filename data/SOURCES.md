@@ -30,7 +30,15 @@ Election contests, SD County 2020 primary.
 
 [Source](https://www.livevoterturnout.com/SanDiego/LiveResults/en/Index_8.html) (Reports tab)
 
-[Direct Link](https://www.livevoterturnout.com/SanDiego/LiveResults/contests.csv)
+[Direct Link](https://www.livevoterturnout.com/SanDiego/LiveResults/contests_8.csv)
+
+## summary_8.csv
+
+Election results by candidate.
+
+[Source](https://www.livevoterturnout.com/SanDiego/LiveResults/en/Index_8.html) (Reports tab)
+
+[Direct Link](https://www.livevoterturnout.com/SanDiego/LiveResults/summary_8.csv)
 
 ## Major_Roads.geojson
 
