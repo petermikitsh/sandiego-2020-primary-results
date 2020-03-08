@@ -8,7 +8,7 @@ module.exports = function(env) {
       host: '0.0.0.0',
       open: true,
     },
-    devtool: devMode ? 'eval-source-map' : 'source-map',
+    devtool: 'source-map',
     entry: {
       client: ['react-hot-loader/patch', path.resolve(__dirname, 'src/client')],
     },
