@@ -20,8 +20,11 @@ const DarkMode = createMuiTheme({
 
 const StyledPage = styled.div`
   max-width: 800px;
-  margin: 0 auto;
-  margin-top: 20px;
+  margin: 20px;
+
+  @media (min-width: 840px) {
+    margin: 20px auto;
+  }
 `;
 
 const App = () => {
@@ -40,7 +43,7 @@ const App = () => {
   return (
     <ThemeProvider theme={DarkMode}>
       <StyledPage>
-        <Typography variant="h2" component="h1">
+        <Typography variant="h3" component="h1">
           San Diego County
         </Typography>
         <Typography variant="h4" component="h2">
@@ -71,7 +74,7 @@ const App = () => {
         </FormControl>
         <Card variant="outlined" style={{ backgroundColor: '#333' }}>
           <CardContent>
-            <PrecinctMap />
+            <PrecinctMap contest={currContest} />
           </CardContent>
         </Card>
       </StyledPage>
