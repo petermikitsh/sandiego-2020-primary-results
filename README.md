@@ -1,6 +1,6 @@
 # sandiego-2020-primary-results
 
-<a href="https://github.io/petermikitsh/sandiego-2020-primary-results">View Election Results</a>
+<a href="https://petermikitsh.github.io/sandiego-2020-primary-results/">View Election Results</a>
 
 Web app for viewing results from the San Diego County March 3, 2020 primary.
 
