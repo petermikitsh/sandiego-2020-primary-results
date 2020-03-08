@@ -33,7 +33,7 @@ const App = () => {
       const { default: contests } = await import('../../data/contests_8.json');
       const countyLevelContests = contests.filter(contest => !contest.Precinct);
       setContests(countyLevelContests);
-      setCurrContest(countyLevelContests[0]['Contest Name']);
+      setCurrContest(countyLevelContests[1]['Contest Name']);
     })();
   }, []);
 
