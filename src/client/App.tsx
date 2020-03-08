@@ -10,6 +10,7 @@ import { createMuiTheme, ThemeProvider } from '@material-ui/core/styles';
 import { hot } from 'react-hot-loader/root';
 import { capitalCase } from 'change-case';
 import styled from 'styled-components';
+import GithubCorner from 'react-github-corner';
 import { PrecinctMap } from './components/PrecinctMap';
 
 const DarkMode = createMuiTheme({
@@ -43,6 +44,7 @@ const App = () => {
   return (
     <ThemeProvider theme={DarkMode}>
       <StyledPage>
+        <GithubCorner href="https://github.com/petermikitsh/sandiego-2020-primary-results" />
         <Typography variant="h3" component="h1">
           San Diego County
         </Typography>

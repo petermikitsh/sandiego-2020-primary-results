@@ -33,6 +33,7 @@
     "d3-zoom": "^1.8.3",
     "react": "^16.13.0",
     "react-dom": "^16.13.0",
+    "react-github-corner": "^2.3.0",
     "react-hot-loader": "^4.12.19",
     "styled-components": "^5.0.1"
   },
