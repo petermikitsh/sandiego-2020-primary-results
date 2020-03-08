@@ -4,21 +4,20 @@ const fs = require('fs');
 const { Readable, Transform } = require('stream');
 const readline = require('readline');
 
-const lineToArray = new Transform({
-  transform(chunk, encoding, cb) {
-    this.push(
-      (this.notFirst ? ',' : '[') + chunk.toString('utf-8').slice(0, -1),
-    );
-    this.notFirst = true;
-    cb();
-  },
-  flush(cb) {
-    this.push(!this.notFirst ? '[]' : ']');
-    cb();
-  },
-});
-
 const convertCSVToJson = basefileName => {
+  const lineToArray = new Transform({
+    transform(chunk, encoding, cb) {
+      this.push(
+        (this.notFirst ? ',' : '[') + chunk.toString('utf-8').slice(0, -1),
+      );
+      this.notFirst = true;
+      cb();
+    },
+    flush(cb) {
+      this.push(!this.notFirst ? '[]' : ']');
+      cb();
+    },
+  });
   const csvFilePath = path.resolve(__dirname, `../data/${basefileName}.csv`);
   const csvStream = fs.createReadStream(csvFilePath);
   const sanitizedStream = new Readable();
@@ -48,4 +47,4 @@ const convertCSVToJson = basefileName => {
     .pipe(writeStream);
 };
 
-['contests_8', 'precincts_8'].map(convertCSVToJson);
+['contests_8', 'precincts_8', 'summary_8'].map(convertCSVToJson);
