@@ -19,5 +19,5 @@ sed 's/-VBM//g' $SCRIPT_DIR/../data/sandiego.txt | \
 cat $SCRIPT_DIR/../data/Major_Roads.geojson | \
   npx --no-install mapshaper \
   -i /dev/stdin \
-  -filter 'StateHwy === 1' \
+  -filter 'StateHwy === 1 && SD === 1' \
   -o $SCRIPT_DIR/../data/highways.geojson
