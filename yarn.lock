@@ -1085,6 +1085,11 @@
     "@types/react-native" "*"
     csstype "^2.2.0"
 
+"@use-it/event-listener@^0.1.2":
+  version "0.1.3"
+  resolved "https://zuora.jfrog.io/zuora/api/npm/zuora-npm/@use-it/event-listener/-/event-listener-0.1.3.tgz#a9920b2819d211cf55e68e830997546eec6886d3"
+  integrity sha1-qZILKBnSEc9V5o6DCZdUbuxohtM=
+
 "@webassemblyjs/ast@1.8.5":
   version "1.8.5"
   resolved "https://registry.yarnpkg.com/@webassemblyjs/ast/-/ast-1.8.5.tgz#51b1c5fe6576a34953bf4b253df9f0d490d9e359"
@@ -6121,6 +6126,21 @@ url@^0.11.0:
   dependencies:
     punycode "1.3.2"
     querystring "0.2.0"
+
+use-dark-mode@^2.3.1:
+  version "2.3.1"
+  resolved "https://zuora.jfrog.io/zuora/api/npm/zuora-npm/use-dark-mode/-/use-dark-mode-2.3.1.tgz#d506349c7b7e09e9977cb8a6ab4470896aa3779a"
+  integrity sha1-1QY0nHt+CemXfLimq0RwiWqjd5o=
+  dependencies:
+    "@use-it/event-listener" "^0.1.2"
+    use-persisted-state "^0.3.0"
+
+use-persisted-state@^0.3.0:
+  version "0.3.0"
+  resolved "https://zuora.jfrog.io/zuora/api/npm/zuora-npm/use-persisted-state/-/use-persisted-state-0.3.0.tgz#f8e3d2fd8eee67e0c86fd596c3ea3e8121c07402"
+  integrity sha1-+OPS/Y7uZ+DIb9WWw+o+gSHAdAI=
+  dependencies:
+    "@use-it/event-listener" "^0.1.2"
 
 use@^3.1.0:
   version "3.1.1"
