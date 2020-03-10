@@ -12,15 +12,20 @@ export interface Results {
   contestName: string;
   isBinaryRace: boolean;
   candidates: string[];
-  results: {
-    // Candidate names & vote count
-    [key: string]: number;
-    // Below: for binary races only.
-    sum?: number;
-    readonly perYes?: number;
-    readonly perNo?: number;
-    readonly net?: number;
-  };
+  // For each precinct:
+  [key: string]:
+    | {
+        // Candidate names & vote count
+        [key: string]: number;
+        // Below: for binary races only.
+        sum?: number;
+        readonly perYes?: number;
+        readonly perNo?: number;
+        readonly net?: number;
+      }
+    | string
+    | boolean
+    | string[];
 }
 
 export const getContestData = async (contestName: string): Promise<Results> => {
@@ -35,7 +40,16 @@ export const getContestData = async (contestName: string): Promise<Results> => {
 
   const contests = summary.filter(item => item['Contest Name'] === contestName);
   const candidates = contests.map(item => item['Candidate Name']);
-  const isBinaryRace = candidates.length === 2;
+  const affirmativeCandidateName = candidates.find(
+    candidate => candidate.indexOf('YES') > -1,
+  );
+  const negativeCandidateName = candidates.find(
+    candidate => candidate.indexOf('NO') > -1,
+  );
+  const isBinaryRace =
+    candidates.length === 2 &&
+    affirmativeCandidateName &&
+    negativeCandidateName;
   const neighborhoods = await getNeighborhoods();
 
   const results = neighborhoods.reduce((acc, currVal) => {
@@ -63,7 +77,8 @@ export const getContestData = async (contestName: string): Promise<Results> => {
   // Decorate with percentages for coloring purposes.
   if (isBinaryRace) {
     Object.keys(results).forEach(neighborhood => {
-      const { YES, NO } = results[neighborhood];
+      const YES = results[neighborhood][affirmativeCandidateName];
+      const NO = results[neighborhood][negativeCandidateName];
 
       const moreData = {
         sum: YES + NO,
