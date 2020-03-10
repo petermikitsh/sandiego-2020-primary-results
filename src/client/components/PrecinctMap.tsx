@@ -1,21 +1,19 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import * as geo from 'd3-geo';
 import * as selection from 'd3-selection';
 import * as zoom from 'd3-zoom';
-import * as scale from 'd3-scale';
-import * as scaleChromatic from 'd3-scale-chromatic';
 import styled from 'styled-components';
-import Popper from '@material-ui/core/Popper';
-import Card from '@material-ui/core/Card';
-import CardContent from '@material-ui/core/CardContent';
-import { Typography } from '@material-ui/core';
-import { getContestData, Results } from '../utils';
+import useDarkMode from 'use-dark-mode';
+import { RegionLayer } from './RegionLayer';
+import { RoadLayer } from './RoadLayer';
+// @ts-ignore
+import { default as sdcounty } from '../../../data/sdcounty.geojson';
 
-const color = scale
-  .scaleSequential(scaleChromatic.interpolateRdBu)
-  .domain([-1, 1]);
+interface StyledMapProps {
+  darkMode: boolean;
+}
 
-const StyledMap = styled.div`
+const StyledMap = styled.div<StyledMapProps>`
   display: flex;
   justify-content: center;
   align-items: center;
@@ -23,130 +21,76 @@ const StyledMap = styled.div`
   path {
     vector-effect: non-scaling-stroke;
     stroke-width: 0.2;
-    stroke: #ddd;
-    fill: #7d7d7d;
-    stroke: #ddd;
   }
 
-  path:not(.highway) {
+  .county {
+    stroke: ${props => (props.darkMode ? '#fff' : '#555')};
+    stroke-width: ${props => (props.darkMode ? '1.5' : '1')};
+    stroke-opacity: ${props => (props.darkMode ? '1' : '0.5')};
+    fill: transparent;
+  }
+
+  .region path {
+    stroke: ${props => (props.darkMode ? '#333' : '#aaa')};
+    fill: ${props => (props.darkMode ? '#e7e7e7' : '#e7e7e7')};
+    fill: #f9f9fa;
+    stroke-opacity: 0.5;
     fill-opacity: 0.5;
+    cursor: pointer;
   }
 
-  path:not(.highway):hover {
-    stroke-width: 3;
-    stroke: #000;
-    z-index: 1;
+  .region path:hover {
+    stroke-width: 2;
+    stroke: ${props => (props.darkMode ? '#333' : '#222')};
+    stroke-opacity: 1;
   }
 
-  .highway {
-    stroke: #fff;
+  .roads path {
+    stroke: ${props => (props.darkMode ? '#888' : '#ddd')};
     stroke-width: 1;
     fill: transparent;
   }
 `;
+
 const width = 600;
 const height = 500;
+const INITIAL_X = -500;
+const INITIAL_Y = -1400;
+const INITIAL_ZOOM = 4;
+const projection = geo.geoMercator().fitSize([width, height], sdcounty);
+const getPath = geo.geoPath().projection(projection);
 
 export const PrecinctMap = ({ contest }: { contest: string }) => {
-  const mount = useRef();
-  const svgRef = useRef();
-  const zoomRef = useRef();
-  const highwayRef = useRef();
-  const precinctsRef = useRef();
-  const [popperData, setPopperData] = useState<any>();
-  const [contestData, setContestData] = useState<Results>();
+  const svgRef = useRef<SVGSVGElement>();
+  const zoomRef = useRef<SVGGElement>();
+  const darkMode = useDarkMode();
 
   useEffect(() => {
     (async () => {
-      const currContestData = await getContestData(contest);
-      setContestData(currContestData);
-
-      // clear old nodes before repainting
-      const parents = [highwayRef.current, precinctsRef.current];
-      parents.forEach((parent: SVGElement) => {
-        while (parent.firstChild) {
-          parent.removeChild(parent.firstChild);
-        }
-      });
-
-      // repaint map
-      (async () => {
-        const { default: highwayGeoJson } = await import(
-          // @ts-ignore
-          '../../../data/highways.geojson'
+      const currZoom = zoom
+        .zoom()
+        .extent([
+          [0, 0],
+          [width, height],
+        ])
+        .scaleExtent([0.9, 25])
+        .on('zoom', () => {
+          selection
+            .select(zoomRef.current)
+            .attr('transform', selection.event.transform);
+        });
+      selection
+        .select(svgRef.current)
+        .call(currZoom)
+        .call(
+          currZoom.transform,
+          zoom.zoomIdentity.translate(INITIAL_X, INITIAL_Y).scale(INITIAL_ZOOM),
         );
-
-        const { default: neighborhoodGeoJson } = await import(
-          // @ts-ignore
-          '../../../data/consolidations.geojson'
-        );
-
-        const projection = geo.geoMercator();
-        projection.fitSize([width, height], neighborhoodGeoJson);
-        selection
-          .select(precinctsRef.current)
-          .selectAll('path')
-          .data(neighborhoodGeoJson.features)
-          .enter()
-          .append('path')
-          .attr('d', geo.geoPath().projection(projection))
-          .on('mouseover', function(geo) {
-            setPopperData({
-              anchor: this,
-              geo,
-            });
-            selection.select(this as any).raise();
-          })
-          .on('mouseleave', () => {
-            setPopperData(null);
-          })
-          // @ts-ignore
-          .style('fill', (d: any) => {
-            if (currContestData?.isBinaryRace) {
-              const {
-                properties: { CONSNAME },
-              } = d;
-
-              // @ts-ignore
-              const { net } = currContestData.results[CONSNAME];
-              return color(net);
-            }
-          });
-        const currZoom = zoom
-          .zoom()
-          .extent([
-            [0, 0],
-            [width, height],
-          ])
-          .scaleExtent([1, 25])
-          .on('zoom', () => {
-            selection
-              .select(zoomRef.current)
-              .attr('transform', selection.event.transform);
-          });
-        selection
-          .select(svgRef.current)
-          .call(currZoom)
-          .call(
-            currZoom.transform,
-            zoom.zoomIdentity.translate(-500, -1400).scale(4),
-          );
-
-        projection.fitSize([width, height], neighborhoodGeoJson);
-        selection
-          .select(highwayRef.current)
-          .selectAll('path')
-          .data(highwayGeoJson.features)
-          .enter()
-          .append('path')
-          .attr('d', geo.geoPath().projection(projection))
-          .classed('highway', true);
-      })();
     })();
-  }, [contest]);
+  }, []);
 
   return (
-    <StyledMap ref={mount}>
+    <StyledMap darkMode={darkMode.value}>
       <svg
         ref={svgRef}
         width={width}
@@ -154,37 +98,24 @@ export const PrecinctMap = ({ contest }: { contest: string }) => {
         preserveAspectRatio="xMinYMin meet"
         viewBox={`0 0 ${width} ${height}`}
       >
-        <g ref={zoomRef}>
-          <g ref={highwayRef} />
-          <g ref={precinctsRef} />
+        <g
+          ref={zoomRef}
+          transform={
+            zoomRef?.current?.getAttribute('transform') ||
+            `translate(${INITIAL_X}, ${INITIAL_Y}), scale(${INITIAL_ZOOM})`
+          }
+        >
+          <g>
+            <path className="county" d={getPath(sdcounty)} />
+          </g>
+          <g className="roads">
+            <RoadLayer getPath={getPath} />
+          </g>
+          <g className="region">
+            <RegionLayer getPath={getPath} contest={contest} />
+          </g>
         </g>
       </svg>
-      <Popper
-        open={!!popperData}
-        anchorEl={popperData?.anchor}
-        placement="left"
-        transition
-      >
-        <Card>
-          <CardContent style={{ maxWidth: '300px' }}>
-            <Typography variant="overline">PRECINCT / NEIGHBORHOOD</Typography>
-            <div>
-              {popperData?.geo?.properties?.CONSNAME}{' '}
-              {popperData?.geo?.properties?.PRECINCT}
-            </div>
-            <Typography variant="overline">CONTEST</Typography>
-            <div>{contest}</div>
-            <Typography variant="overline">RESULTS</Typography>
-            <pre style={{ whiteSpace: 'pre-wrap', display: 'block' }}>
-              {JSON.stringify(
-                contestData?.results?.[popperData?.geo?.properties?.CONSNAME],
-                null,
-                2,
-              )}
-            </pre>
-          </CardContent>
-        </Card>
-      </Popper>
     </StyledMap>
   );
 };
