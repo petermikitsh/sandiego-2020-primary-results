@@ -21,3 +21,9 @@ cat $SCRIPT_DIR/../data/Major_Roads.geojson | \
   -i /dev/stdin \
   -filter 'StateHwy === 1 && SD === 1' \
   -o $SCRIPT_DIR/../data/highways.geojson
+
+cat $SCRIPT_DIR/../data/sandiego.txt | \
+  npx --no-install mapshaper \
+  -i /dev/stdin \
+  -dissolve2 \
+  -o $SCRIPT_DIR/../data/sdcounty.geojson
