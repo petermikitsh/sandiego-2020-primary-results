@@ -1,3 +1,6 @@
+import maxBy from 'lodash.maxby';
+import { Precinct, Results, Regions } from './types';
+
 const getNeighborhoods = async (): Promise<string[]> => {
   const {
     default: { features },
@@ -8,36 +11,49 @@ const getNeighborhoods = async (): Promise<string[]> => {
   return features.map(area => area.properties.CONSNAME);
 };
 
-export interface Results {
-  contestName: string;
-  isBinaryRace: boolean;
-  candidates: string[];
-  // For each precinct:
-  [key: string]:
-    | {
-        // Candidate names & vote count
-        [key: string]: number;
-        // Below: for binary races only.
-        sum?: number;
-        readonly perYes?: number;
-        readonly perNo?: number;
-        readonly net?: number;
-      }
-    | string
-    | boolean
-    | string[];
-}
+const getRegionBlueprint = (
+  candidateIds: string[],
+  regionIds: string[],
+): Regions => {
+  return regionIds.reduce(
+    (acc, regionId) => ({
+      ...acc,
+      [regionId]: {
+        candidates: candidateIds.reduce(
+          (acc, candidateId) => ({
+            ...acc,
+            [candidateId]: null,
+          }),
+          {},
+        ),
+        sum: null,
+        perYes: null,
+        perNo: null,
+        net: null,
+      },
+    }),
+    {},
+  );
+};
 
-export const getContestData = async (contestName: string): Promise<Results> => {
+const precinctIdToNeighborhood = (precinctId: string) => {
+  return precinctId.replace(/\d+-\d+-/, '').replace(/-VBM/g, '');
+};
+
+export const getContestData = async (
+  contestName: string,
+  level = 'neighborhood',
+): Promise<Results> => {
   if (!contestName) {
     return;
   }
 
   // @ts-ignore
   const { default: summary } = await import('../../data/summary_8.json');
-  // @ts-ignore
-  const { default: precincts } = await import('../../data/precincts_8.json');
-
+  const { default: precincts }: { default: Precinct[] } = await import(
+    // @ts-ignore
+    '../../data/precincts_8.json'
+  );
   const contests = summary.filter(item => item['Contest Name'] === contestName);
   const candidates = contests.map(item => item['Candidate Name']);
   const affirmativeCandidateName = candidates.find(
@@ -50,60 +66,56 @@ export const getContestData = async (contestName: string): Promise<Results> => {
     candidates.length === 2 &&
     affirmativeCandidateName &&
     negativeCandidateName;
-  const neighborhoods = await getNeighborhoods();
-
-  const results = neighborhoods.reduce((acc, currVal) => {
-    acc[currVal] = {};
-    candidates.forEach(candidate => {
-      acc[currVal][candidate] = 0;
-    });
-    return acc;
-  }, {});
-
-  precincts.forEach(precinct => {
-    if (precinct['Contest Name'] !== contestName) {
-      return;
-    }
-    const neighborhood = precinct.Precinct.replace(/\d+-\d+-/, '').replace(
-      /-VBM/g,
-      '',
-    );
-    const candidate = precinct['Candidate Name'];
-    if (typeof results?.[neighborhood]?.[candidate] === 'number') {
-      results[neighborhood][candidate] += Number(precinct.Votes);
-    }
-  });
-
-  // Decorate with percentages for coloring purposes.
-  if (isBinaryRace) {
-    Object.keys(results).forEach(neighborhood => {
-      const YES = results[neighborhood][affirmativeCandidateName];
-      const NO = results[neighborhood][negativeCandidateName];
-
-      const moreData = {
-        sum: YES + NO,
-        get perYes() {
-          return YES / this.sum || 0;
-        },
-        get perNo() {
-          return NO / this.sum || 0;
-        },
-        get net() {
-          return this.perYes - this.perNo;
-        },
-      };
-
-      results[neighborhood] = {
-        ...results[neighborhood],
-        ...moreData,
-      };
-    });
-  }
+  const regions = level === 'neighborhood' && (await getNeighborhoods());
 
   return {
     contestName,
     isBinaryRace,
     candidates,
-    results,
+    regions: (() => {
+      const blueprint = getRegionBlueprint(candidates, regions);
+
+      // Decorate blueprint with raw stats.
+      precincts
+        .filter(p => p['Contest Name'] === contestName)
+        .forEach(p => {
+          const regionId = precinctIdToNeighborhood(p.Precinct);
+          const candidateId = p['Candidate Name'];
+          const voteCount = Number(p.Votes);
+          /* Some precinct data (e.g, precinct "8294-999294-VBM-AV")
+           * doesn't correlate to any mappable area. */
+          blueprint[regionId] &&
+            (blueprint[regionId].candidates[candidateId] += voteCount);
+        });
+
+      // Decorate blueprint with computed metrics.
+      regions.forEach(regionId => {
+        const region = blueprint[regionId];
+        blueprint[regionId] = {
+          ...region,
+          sum: Object.values(region.candidates).reduce((a, b) => a + b),
+          get winner() {
+            if (this.sum === 0) {
+              return null;
+            }
+            return maxBy(
+              Object.keys(region.candidates),
+              cId => region.candidates[cId],
+            );
+          },
+          get perYes() {
+            return region.candidates[affirmativeCandidateName] / this.sum || 0;
+          },
+          get perNo() {
+            return region.candidates[negativeCandidateName] / this.sum || 0;
+          },
+          get net() {
+            return this.perYes - this.perNo;
+          },
+        };
+      });
+
+      return blueprint;
+    })(),
   };
 };

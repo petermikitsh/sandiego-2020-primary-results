@@ -2,12 +2,12 @@ import React, { useState, useEffect, useMemo } from 'react';
 import * as scale from 'd3-scale';
 import * as scaleChromatic from 'd3-scale-chromatic';
 import Popper from '@material-ui/core/Popper';
-import Card from '@material-ui/core/Card';
-import CardContent from '@material-ui/core/CardContent';
-import { Typography } from '@material-ui/core';
 // @ts-ignore
 import { default as neighborhoods } from '../../../data/consolidations.geojson';
-import { getContestData, Results } from '../utils';
+import { getContestData } from '../utils';
+import { Results } from '../types';
+import stringToColor from 'string-to-color';
+import { PopperContent } from './PopperContent';
 
 const color = scale
   .scaleSequential(scaleChromatic.interpolateRdBu)
@@ -43,10 +43,14 @@ export const RegionLayer = ({ contest, getPath }: RegionLayerProps) => {
             data-id={region.properties.CONSNAME}
             style={{
               fill: (() => {
-                if (contestData?.isBinaryRace) {
-                  return color(
-                    contestData.results[region.properties.CONSNAME].net,
-                  );
+                const regionData =
+                  contestData?.regions[region?.properties?.CONSNAME];
+                if (contestData && !regionData?.sum) {
+                  return 'url(#diagonal-stripe-1)';
+                } else if (contestData?.isBinaryRace) {
+                  return color(regionData.net);
+                } else if (regionData?.sum > 0) {
+                  return stringToColor(regionData.winner);
                 }
               })(),
             }}
@@ -74,23 +78,10 @@ export const RegionLayer = ({ contest, getPath }: RegionLayerProps) => {
         anchorEl={popperData?.anchor}
         placement="left"
       >
-        <Card style={{ marginRight: '10px' }}>
-          <CardContent style={{ maxWidth: '325px' }}>
-            <Typography variant="overline">PRECINCT / NEIGHBORHOOD</Typography>
-            <div>
-              {popperData?.geo?.properties?.CONSNAME}{' '}
-              {popperData?.geo?.properties?.PRECINCT}
-            </div>
-            <Typography variant="overline">RESULTS</Typography>
-            <pre style={{ whiteSpace: 'pre-wrap', display: 'block' }}>
-              {JSON.stringify(
-                contestData?.results?.[popperData?.geo?.properties?.CONSNAME],
-                null,
-                2,
-              )}
-            </pre>
-          </CardContent>
-        </Card>
+        <PopperContent
+          regionId={popperData?.geo?.properties?.CONSNAME}
+          region={contestData?.regions[popperData?.geo?.properties?.CONSNAME]}
+        />
       </Popper>
     </>
   );
