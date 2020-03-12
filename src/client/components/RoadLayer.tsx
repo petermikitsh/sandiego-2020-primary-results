@@ -17,10 +17,11 @@ export const RoadLayer = ({ getPath }: RoadLayerProps) => {
     })();
   }, []);
 
-  return (
-    !!roads &&
-    roads.features.map(road => (
-      <path key={road.properties.OBJECTID} d={getPath(road)} />
-    ))
-  );
+  if (!roads) {
+    return null;
+  }
+
+  return roads.features.map(road => (
+    <path key={road.properties.OBJECTID} d={getPath(road)} />
+  ));
 };
