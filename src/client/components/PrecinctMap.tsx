@@ -28,6 +28,8 @@ const StyledMap = styled.div<StyledMapProps>`
     stroke-width: ${props => (props.darkMode ? '1.5' : '1')};
     stroke-opacity: ${props => (props.darkMode ? '1' : '0.5')};
     fill: transparent;
+    fill: #f9f9fa;
+    fill-opacity: 0.5;
   }
 
   .region path {
@@ -82,10 +84,7 @@ export const PrecinctMap = ({ contest }: { contest: string }) => {
       selection
         .select(svgRef.current)
         .call(currZoom)
-        .call(
-          currZoom.transform,
-          zoom.zoomIdentity.translate(INITIAL_X, INITIAL_Y).scale(INITIAL_ZOOM),
-        );
+        .call(currZoom.transform, zoom.zoomIdentity);
     })();
   }, []);
 
@@ -98,6 +97,19 @@ export const PrecinctMap = ({ contest }: { contest: string }) => {
         preserveAspectRatio="xMinYMin meet"
         viewBox={`0 0 ${width} ${height}`}
       >
+        <defs>
+          <pattern
+            id="diagonal-stripe-1"
+            patternUnits="userSpaceOnUse"
+            width="4"
+            height="4"
+          >
+            <path
+              d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2"
+              style={{ stroke: darkMode.value ? '#333' : '#aaa' }}
+            />
+          </pattern>
+        </defs>
         <g
           ref={zoomRef}
           transform={
