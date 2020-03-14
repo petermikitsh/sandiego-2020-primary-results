@@ -4,7 +4,6 @@ import * as scaleChromatic from 'd3-scale-chromatic';
 import Popper from '@material-ui/core/Popper';
 // @ts-ignore
 import { default as neighborhoods } from '../../../data/consolidations.geojson';
-import { getContestData } from '../utils';
 import { Results } from '../types';
 import stringToColor from 'string-to-color';
 import { PopperContent } from './PopperContent';
@@ -15,23 +14,15 @@ const color = scale
 
 interface RegionLayerProps {
   getPath(feature: any): string;
-  contest?: string;
+  results?: Results;
 }
 
-export const RegionLayer = ({ contest, getPath }: RegionLayerProps) => {
+export const RegionLayer = ({ results, getPath }: RegionLayerProps) => {
   const [regions, setRegions] = useState(neighborhoods.features);
   const [popperData, setPopperData] = useState<any>();
-  const [contestData, setContestData] = useState<Results>();
 
   const getPathMemo = (feature: any) =>
     useMemo(() => getPath(feature), [feature]);
-
-  useEffect(() => {
-    (async () => {
-      const currContestData = await getContestData(contest);
-      setContestData(currContestData);
-    })();
-  }, [contest]);
 
   return (
     <>
@@ -44,12 +35,12 @@ export const RegionLayer = ({ contest, getPath }: RegionLayerProps) => {
             style={{
               fill: (() => {
                 const regionData =
-                  contestData?.regions[region?.properties?.CONSNAME];
-                if (contestData && !regionData?.sum) {
+                  results?.regions[region?.properties?.CONSNAME];
+                if (results && !regionData?.sum) {
                   return 'url(#diagonal-stripe-1)';
-                } else if (contestData?.isBinaryRace) {
+                } else if (results?.isBinaryRace) {
                   return color(regionData.net);
-                } else if (regionData?.sum > 0) {
+                } else if (regionData?.sum > 0 && regionData.winner) {
                   return stringToColor(regionData.winner);
                 }
               })(),
@@ -80,7 +71,7 @@ export const RegionLayer = ({ contest, getPath }: RegionLayerProps) => {
       >
         <PopperContent
           regionId={popperData?.geo?.properties?.CONSNAME}
-          region={contestData?.regions[popperData?.geo?.properties?.CONSNAME]}
+          region={results?.regions[popperData?.geo?.properties?.CONSNAME]}
         />
       </Popper>
     </>

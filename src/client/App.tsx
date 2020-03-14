@@ -13,8 +13,11 @@ import { capitalCase } from 'change-case';
 import styled from 'styled-components';
 import GithubCorner from 'react-github-corner';
 import { PrecinctMap } from './components/PrecinctMap';
+import { ContestStats } from './components/ContestStats';
 import useDarkMode from 'use-dark-mode';
 import { Theme } from '@material-ui/core';
+import { getContestData } from './utils';
+import { Results } from './types';
 
 const LightMode = createMuiTheme({
   palette: {
@@ -41,7 +44,7 @@ const DarkMode = createMuiTheme({
 });
 
 const StyledPage = styled.div`
-  max-width: 800px;
+  max-width: 850px;
   margin: 20px;
 
   @media (min-width: 840px) {
@@ -63,6 +66,7 @@ const App = () => {
   const [currContest, setCurrContest] = useState<string>();
   const [contests, setContests] = useState<object[]>([]);
   const [theme, setTheme] = useState<Theme>();
+  const [results, setResults] = useState<Results>();
   const darkMode = useDarkMode();
 
   useEffect(() => {
@@ -79,6 +83,13 @@ const App = () => {
       setCurrContest(countyLevelContests[1]['Contest Name']);
     })();
   }, []);
+
+  useEffect(() => {
+    (async () => {
+      const currContestData = await getContestData(currContest);
+      setResults(currContestData);
+    })();
+  }, [currContest]);
 
   return (
     <ThemeProvider theme={theme}>
@@ -153,9 +164,10 @@ const App = () => {
         </FormControl>
         <Card variant="outlined">
           <CardContent>
-            <PrecinctMap contest={currContest} />
+            <PrecinctMap results={results} />
           </CardContent>
         </Card>
+        <ContestStats results={results} />
       </StyledPage>
     </ThemeProvider>
   );

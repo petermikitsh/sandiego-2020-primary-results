@@ -8,9 +8,11 @@ import { RegionLayer } from './RegionLayer';
 import { RoadLayer } from './RoadLayer';
 // @ts-ignore
 import { default as sdcounty } from '../../../data/sdcounty.geojson';
+import { Results } from '../types';
 
 interface StyledMapProps {
   darkMode: boolean;
+  results: Results;
 }
 
 const StyledMap = styled.div<StyledMapProps>`
@@ -62,7 +64,7 @@ const INITIAL_ZOOM = 4;
 const projection = geo.geoMercator().fitSize([width, height], sdcounty);
 const getPath = geo.geoPath().projection(projection);
 
-export const PrecinctMap = ({ contest }: { contest: string }) => {
+export const PrecinctMap = ({ results }: { results: Results }) => {
   const svgRef = useRef<SVGSVGElement>();
   const zoomRef = useRef<SVGGElement>();
   const darkMode = useDarkMode();
@@ -124,7 +126,7 @@ export const PrecinctMap = ({ contest }: { contest: string }) => {
             <RoadLayer getPath={getPath} />
           </g>
           <g className="region">
-            <RegionLayer getPath={getPath} contest={contest} />
+            <RegionLayer getPath={getPath} results={results} />
           </g>
         </g>
       </svg>
