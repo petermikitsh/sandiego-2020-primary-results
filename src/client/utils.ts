@@ -30,6 +30,7 @@ const getRegionBlueprint = (
         perYes: null,
         perNo: null,
         net: null,
+        winMargin: null,
       },
     }),
     {},
@@ -91,17 +92,39 @@ export const getContestData = async (
       // Decorate blueprint with computed metrics.
       regions.forEach(regionId => {
         const region = blueprint[regionId];
+        const nameCountTuple = Object.entries(region.candidates)
+          .sort(([, a], [, b]) => {
+            return b - a;
+          })
+          .filter(([, a]) => a > 0);
+
+        const winners = nameCountTuple.filter(
+          winner => winner[1] === nameCountTuple[0][1],
+        );
+        const tie = winners.length > 1;
+
         blueprint[regionId] = {
           ...region,
+          tie,
           sum: Object.values(region.candidates).reduce((a, b) => a + b),
+          get winners() {
+            return winners;
+          },
           get winner() {
+            const noVotes = this.sum === 0;
+            if (noVotes || tie) {
+              return null;
+            }
+            return nameCountTuple[0][0];
+          },
+          get winMargin() {
             if (this.sum === 0) {
               return null;
             }
-            return maxBy(
-              Object.keys(region.candidates),
-              cId => region.candidates[cId],
-            );
+            if (nameCountTuple.length <= 1) {
+              return nameCountTuple.length;
+            }
+            return (nameCountTuple[0][1] - nameCountTuple[1][1]) / this.sum;
           },
           get perYes() {
             return region.candidates[affirmativeCandidateName] / this.sum || 0;

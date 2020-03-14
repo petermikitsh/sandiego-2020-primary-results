@@ -7,6 +7,9 @@ export interface Region {
   candidates: CandidatesVoteCount;
   sum: number;
   winner?: string;
+  winners?: [string, number][];
+  winMargin?: number;
+  tie?: boolean;
   // Below: for binary races only.
   perYes?: number;
   perNo?: number;
