@@ -34,7 +34,7 @@ export const PopperContent = ({ regionId, region }: PopperContentProps) => {
         <Table size="small">
           <TableBody>
             {candidateTuple.map(([candidateId, voteCount]) => (
-              <TableRow>
+              <TableRow key={candidateId}>
                 <TableCell>{candidateId}</TableCell>
                 <TableCell>{voteCount}</TableCell>
                 <TableCell>{getPercent(candidateId, region)}</TableCell>
