@@ -7,7 +7,7 @@ import { Region } from '../types';
 import { Table, TableBody, TableRow, TableCell } from '@material-ui/core';
 
 interface PopperContentProps {
-  regionId?: string;
+  regionLabel?: string;
   region?: Region;
 }
 
@@ -16,7 +16,7 @@ const getPercent = (candidateId: string, region: Region) => {
   return `${(percent * 100).toFixed(2)}%`;
 };
 
-export const PopperContent = ({ regionId, region }: PopperContentProps) => {
+export const PopperContent = ({ region, regionLabel }: PopperContentProps) => {
   const candidateTuple = Object.entries(region?.candidates || {})
     .sort(([, a], [, b]) => b - a)
     .slice(0, 5);
@@ -27,7 +27,7 @@ export const PopperContent = ({ regionId, region }: PopperContentProps) => {
       <CardContent style={{ maxWidth: '350px' }}>
         <p>
           <Typography variant="overline">NEIGHBORHOOD</Typography>
-          <Typography>{regionId}</Typography>
+          <Typography>{regionLabel}</Typography>
         </p>
         <Typography variant="overline">RESULTS</Typography>
         {empty && <div>No Results</div>}

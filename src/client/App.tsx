@@ -86,10 +86,11 @@ const App = () => {
 
   useEffect(() => {
     (async () => {
-      const currContestData = await getContestData(currContest);
+      // @ts-ignore
+      const currContestData = await getContestData(currContest, regionLevel);
       setResults(currContestData);
     })();
-  }, [currContest]);
+  }, [currContest, regionLevel]);
 
   return (
     <ThemeProvider theme={theme}>
@@ -112,9 +113,7 @@ const App = () => {
               setRegionLevel(e.target.value);
             }}
           >
-            <MenuItem value="precinct" disabled>
-              Precinct (coming soon)
-            </MenuItem>
+            <MenuItem value="precinct">Precinct</MenuItem>
             <MenuItem value="neighborhood">Neighborhood</MenuItem>
           </Select>
         </FormControl>
@@ -164,7 +163,7 @@ const App = () => {
         </FormControl>
         <Card variant="outlined">
           <CardContent>
-            <PrecinctMap results={results} />
+            <PrecinctMap results={results} regionLevel={regionLevel} />
           </CardContent>
         </Card>
         <ContestStats results={results} />

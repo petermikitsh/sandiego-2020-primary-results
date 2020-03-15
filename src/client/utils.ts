@@ -1,14 +1,24 @@
 import maxBy from 'lodash.maxby';
 import { Precinct, Results, Regions } from './types';
 
-const getNeighborhoods = async (): Promise<string[]> => {
-  const {
-    default: { features },
-  } = await import(
-    // @ts-ignore
-    '../../data/consolidations.geojson'
-  );
-  return features.map(area => area.properties.CONSNAME);
+const getRegionIds = async (regionLevel: string): Promise<string[]> => {
+  if (regionLevel === 'neighborhood') {
+    const {
+      default: { features },
+    } = await import(
+      // @ts-ignore
+      '../../data/consolidations.geojson'
+    );
+    return features.map(area => area.properties.CONSNAME);
+  } else if (regionLevel === 'precinct') {
+    const {
+      default: { features },
+    } = await import(
+      // @ts-ignore
+      '../../data/sandiego.txt'
+    );
+    return features.map(feature => feature.properties.PRECINCT);
+  }
 };
 
 const getRegionBlueprint = (
@@ -37,13 +47,18 @@ const getRegionBlueprint = (
   );
 };
 
-const precinctIdToNeighborhood = (precinctId: string) => {
-  return precinctId.replace(/\d+-\d+-/, '').replace(/-VBM/g, '');
+const precinctIdToRegionId = (precinctId: string, regionType: string) => {
+  if (regionType === 'neighborhood') {
+    return precinctId.replace(/\d+-\d+-/, '').replace(/-VBM/g, '');
+  } else if (regionType === 'precinct') {
+    // ex: "0001-105000-RANCHO BERNARDO"
+    return precinctId.match(/\d{4}-(\d{6})/)[1];
+  }
 };
 
 export const getContestData = async (
   contestName: string,
-  level = 'neighborhood',
+  regionType: 'neighborhood' | 'precinct' = 'neighborhood',
 ): Promise<Results> => {
   if (!contestName) {
     return;
@@ -67,7 +82,7 @@ export const getContestData = async (
     candidates.length === 2 &&
     affirmativeCandidateName &&
     negativeCandidateName;
-  const regions = level === 'neighborhood' && (await getNeighborhoods());
+  const regions = await getRegionIds(regionType);
 
   return {
     contestName,
@@ -80,7 +95,7 @@ export const getContestData = async (
       precincts
         .filter(p => p['Contest Name'] === contestName)
         .forEach(p => {
-          const regionId = precinctIdToNeighborhood(p.Precinct);
+          const regionId = precinctIdToRegionId(p.Precinct, regionType);
           const candidateId = p['Candidate Name'];
           const voteCount = Number(p.Votes);
           /* Some precinct data (e.g, precinct "8294-999294-VBM-AV")

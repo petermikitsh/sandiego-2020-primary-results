@@ -1,12 +1,15 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import * as scale from 'd3-scale';
 import * as scaleChromatic from 'd3-scale-chromatic';
 import Popper from '@material-ui/core/Popper';
 // @ts-ignore
 import { default as neighborhoods } from '../../../data/consolidations.geojson';
+// @ts-ignore
+import { default as precincts } from '../../../data/sandiego.txt';
 import { Results } from '../types';
 import stringToColor from 'string-to-color';
 import { PopperContent } from './PopperContent';
+import debounce from 'lodash.debounce';
 
 const color = scale
   .scaleSequential(scaleChromatic.interpolateRdBu)
@@ -15,27 +18,72 @@ const color = scale
 interface RegionLayerProps {
   getPath(feature: any): string;
   results?: Results;
+  regionLevel: string;
 }
 
-export const RegionLayer = ({ results, getPath }: RegionLayerProps) => {
+const getRegionId = (regionLevel: string, regionGeoJSON: any) => {
+  if (regionLevel === 'neighborhood') {
+    return regionGeoJSON?.properties?.CONSNAME;
+  } else if (regionLevel === 'precinct') {
+    return regionGeoJSON?.properties?.PRECINCT;
+  }
+};
+
+const getRegionLabel = (region: any) => {
+  const label = region?.properties?.CONSNAME;
+  const precinctId = region?.properties?.PRECINCT;
+
+  if (!precinctId) {
+    return label;
+  }
+
+  return `${label} ${precinctId}`;
+};
+
+export const RegionLayer = ({
+  results,
+  getPath,
+  regionLevel,
+}: RegionLayerProps) => {
   const [regions, setRegions] = useState(neighborhoods.features);
   const [popperData, setPopperData] = useState<any>();
+  const [regionIdToPathMap, setRegionIdToPathMap] = useState(null);
 
-  const getPathMemo = (feature: any) =>
-    useMemo(() => getPath(feature), [feature]);
+  useEffect(() => {
+    setRegionIdToPathMap(
+      [...precincts.features, ...neighborhoods.features].reduce(
+        (acc, currFeature) => {
+          const regionId =
+            currFeature.properties.PRECINCT || currFeature.properties.CONSNAME;
+          acc[regionId] = getPath(currFeature);
+          return acc;
+        },
+        {},
+      ),
+    );
+  }, []);
+
+  useEffect(() => {
+    if (regionLevel === 'precinct') {
+      setRegions(precincts.features);
+    } else if (regionLevel === 'neighborhoods') {
+      setRegions(neighborhoods.features);
+    }
+  }, [regionLevel]);
 
   return (
     <>
       {regions.map((region, index) => {
+        const regionId = getRegionId(regionLevel, region);
+
         return (
           <path
-            d={getPathMemo(region)}
-            key={region.properties.CONSNAME}
-            data-id={region.properties.CONSNAME}
+            d={regionIdToPathMap?.[regionId]}
+            key={regionId}
+            data-id={regionId}
             style={{
               fill: (() => {
-                const regionData =
-                  results?.regions[region?.properties?.CONSNAME];
+                const regionData = results?.regions[regionId];
                 if (results && !regionData?.sum) {
                   return 'url(#diagonal-stripe-1)';
                 } else if (results?.isBinaryRace) {
@@ -47,16 +95,14 @@ export const RegionLayer = ({ results, getPath }: RegionLayerProps) => {
             }}
             onMouseOver={() => {
               setPopperData({
-                anchor: document.querySelector(
-                  `[data-id="${region.properties.CONSNAME}"]`,
-                ),
+                anchor: document.querySelector(`[data-id="${regionId}"]`),
                 geo: region,
               });
-              setRegions([
-                ...regions.slice(0, index),
-                ...regions.slice(index + 1, regions.length),
-                region,
-              ]);
+              // setRegions([
+              //   ...regions.slice(0, index),
+              //   ...regions.slice(index + 1, regions.length),
+              //   region,
+              // ]);
             }}
             onMouseLeave={() => {
               setPopperData(null);
@@ -70,8 +116,8 @@ export const RegionLayer = ({ results, getPath }: RegionLayerProps) => {
         placement="left"
       >
         <PopperContent
-          regionId={popperData?.geo?.properties?.CONSNAME}
-          region={results?.regions[popperData?.geo?.properties?.CONSNAME]}
+          regionLabel={getRegionLabel(popperData?.geo)}
+          region={results?.regions[getRegionId(regionLevel, popperData?.geo)]}
         />
       </Popper>
     </>
